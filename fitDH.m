@@ -1,445 +1,138 @@
-function y = fitDH(p,p2, pic)
+function y = fitDH(p,abpar,pic)
+% Fit high density data for Variation C3
 
+km = p(1);
+kf = p(2);
 
-% This only runs C3
+% High density
 tt = 45;
-mm = 3;
-% these things change for each data set
-% this is the total days shift 0 to 1
+IC = 39;
 
-% Input a matrix length tt by 6 (L1-L4, P, A)
+% Load high density data
+HighDensityData
 
-if pic ==0
-sl = [1, 1];
+%% First data set
 
-g = [1 0.45];
-else
-    sl = [1.4, 1, 1.5];
-g = [1 0.45];
-end
+% summed larvae values (Var C, row 103)
+Data = sum(HD1);
+% Input daily death - calculated from columns P and R in Var C
+% d = [  0.038462, 0.053333333333333,   0.098592   0.09375 , 0, 0,0.017241, 0, 0, 0.034483, 0, 0  0, 0,0.05   0.055555555556  0, 0.117647, .2, 0.0833333, 0,  0.181818181818182   0.222222222222222   0.142857142857143    , 0    0.1667,   0.2, 0.25        zeros(1,20)   ];
+nd = [3     4	7	6	0	0	1	0	0	1	0	0	0	0	1	1	0	2	3	1	0	2	2	1	0	1	1	1	0];
+n = [78     75	71	64	58	58	58	57	57	57	56	56	56	56	56	55	54	54	52	49	48	48	46	44	43	43	42	41	40];
+adult = [0	0	0	0	0	0	0	0	10	28	34	36	36	36	36	37	37	37	37	37	37	37	37	37	37	37	37	37	37];
 
-gm = 7;
+adult = cumsum(sum(HD1(:,6:7),2))';
+n = sum(HD1(:,1:5),2)'+adult;
+nd = n(1:end-1)-n(2:end);
 
+d = zeros(1,tt);
+d(1:length(nd)) = nd./(n(1:end-1)-adult(1:end-1));
 
+VarC3
 
+% Daily males and females - Var C columns N and O
+Mp = [0     0    0     0     0     0     0     0     7     8     0     1     0     0     0     1  zeros(1, 29)];
+Fp = [0     0     0     0     0     0     0     0     3    10     6     1 zeros(1,33)];
 
-Data  = [177   109    88   339   128    17    20];
-% In put daily death
- d = [  0.038462, 0.053333333333333,   0.098592   0.09375 , 0, 0,0.017241, 0, 0, 0.034483, 0, 0  0, 0,0.05   0.055555555556  0, 0.117647, .2, 0.0833333, 0,  0.181818181818182   0.222222222222222   0.142857142857143    , 0    0.1667,   0.2, 0.25    zeros(1,19)   ];
-
-
-km = p(1)  ;
-kf =p(2) ;
-% initial values 
-
-dl =0;
-Fe = zeros(tt, 22);
-M = zeros(tt, 22);
-
-
-Fe(1,2) = 39;
-M(1,2) = 39;
-
-K = zeros(tt,1);
-
-K(1:(dl+1),:) = 30; 
-% 
-
-%
-    
-    
- t = 2;
-  nn = sum(M(1,2:13) + Fe(1,2:13));
-
-   if(pic == 0)
-      
-      
-   [Fe(t,:) , M(t,:),  K(t+dl)] = discreteLonlyG2(Fe(t-1,:) ,M(t-1,:),K([(t-1), (t+dl-1)]) ,km, kf, d(t-1), p2(1),p2(2), sl, gm, g, nn);
-  
-
-   
-        for t = 3:tt
-
-        nn = sum(M((t-2),2:13) + Fe((t-2),2:13));
-        [Fe(t,:) , M(t,:),  K(t+dl)] = discreteLonlyG2(Fe(t-1,:) ,M(t-1,:),K([(t-1), (t+dl-1)]) ,km, kf, d(t-1), p2(1),p2(2), sl, gm, g, nn);
-
-        end
-  else
-      
-        [Fe(t,:) , M(t,:),  K(t+dl)] = discreteLonlyG2s(Fe(t-1,:) ,M(t-1,:),K([(t-1), (t+dl-1)]) ,km, kf, d(t-1), p2(1),p2(2), sl, gm, g, nn);
-  
-
-   
-        for t = 3:tt
-
-         nn = sum(M((t-2),2:13) + Fe((t-2),2:13));
-         [Fe(t,:) , M(t,:),  K(t+dl)] = discreteLonlyG2s(Fe(t-1,:) ,M(t-1,:),K([(t-1), (t+dl-1)]) ,km, kf, d(t-1), p2(1),p2(2), sl, gm, g, nn);
-    
-        end
-  end
-
-
-
-modY = zeros(1,7);
-modY(1) = sum(Fe(:,2) + M(:,2));
-modY(2) = sum(sum(Fe(:,3:4) + M(:,3:4),2));
-modY(3) = sum(sum(Fe(:,5:7) + M(:,5:7),2));
-modY(4) = sum(sum(Fe(:,8:13) + M(:,8:13),2));
-modY(5) = sum(sum(Fe(:,14:19) + M(:,14:19),2));
-modY(6) = sum(sum(M(:,20:22)));
-modY(7) = sum(sum(Fe(:,20:22)));
-Mp = [0     0, 0     0     0     0     0     0     7     8     0     1     0     0     0     1, zeros(1, 29)];
-Fp = [0     0     0     0     0     0     0     0     3    10     6     1, zeros(1,33)];
-
-% Norma 1/5
-if( mm == 1)
-y =    norm((modY-Data)./Data);
-elseif(mm == 2)
-y =    norm([Mp,Fp] - [sum(M(:,20:22),2)', sum(Fe(:,20:22),2)']);
-else
+% Calculating error
 y2 = (modY(1:5)-Data(1:5))./Data(1:5);
-    y2 =  sum(y2.^2) + sum((([Mp,Fp] - [sum(M(:,20:22),2)', sum(Fe(:,20:22),2)'])./4).^2);
-   y =    y2;
-end
+y2 = sum(y2.^2) + sum((([Mp,Fp] - [sum(M(:,20:22),2)', sum(Fe(:,20:22),2)'])./4).^2);
+y = y2;
 
-% 2nd data set
+%% Second data set
 
+% summed larvae values (Var C, row 143)
+Data  = [160    79    67   531   168];
+% Input daily death - calculated from columns P and R in Var C
+% d = [ 0,  0, 0, 0, 0.012820512820513   0.03896103896, 0.013514 0, 0, 0, 0, 0, 0   0.0434782609, 0,0, 0    0.045455   0.142857142857143   0.222222   0.1428571429   0.25   0.1111111   0.125    0 0, 0.14285714, 0  0.166667, 0, 0, 0, 0.2, 0 , 0.25,  zeros(1,35) ];
+nd = [0     0	0	0	1	3	1	0	0	0	0	0	0	1	0	0	0	1	3	4	2	3	1	1	0	0	1	0	1	0	0	0	1	0	1	0	0];
+n = [78	78	78	78	78	77	74	73	73	73	73	73	73	73	72	72	72	72	71	68	64	62	59	58	57	57	57	56	56	55	55	55	55	54	54	53	53];
+adult = [0     0	0	0	0	0	0	3	39	46	49	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50	50];
+d = zeros(1,tt);
+d(1:length(nd)) = nd./(n-adult);
 
-
-
-Data  = [    160    79    67   531   168    32    18];
-% In put daily death
- d = [ 0,  0, 0, 0, 0.012820512820513   0.03896103896, 0.013514 0, 0, 0, 0, 0, 0   0.0434782609, 0,0, 0    0.045455   0.142857142857143   0.222222   0.1428571429   0.25   0.1111111   0.125    0 0, 0.14285714, 0  0.166667, 0, 0, 0, 0.2, 0 , 0.25,  zeros(1,19) ];
-
-
-
-% initial values 
-
-Fe = zeros(tt, 22);
-M = zeros(tt, 22);
+VarC3
 
 
-Fe(1,2) = 39;
-M(1,2) = 39;
-
-K = zeros(tt,1);
-
-K(1:(dl+1),:) = 30; 
-% 
-
-%
-    
-    
-t = 2;
-  nn = sum(M(1,2:13) + Fe(1,2:13));
-  
-  if(pic == 0)
-      
-      
-   [Fe(t,:) , M(t,:),  K(t+dl)] = discreteLonlyG2(Fe(t-1,:) ,M(t-1,:),K([(t-1), (t+dl-1)]) ,km, kf, d(t-1), p2(1),p2(2), sl, gm, g, nn);
-  
-
-   
-        for t = 3:tt
-
-        nn = sum(M((t-2),2:13) + Fe((t-2),2:13));
-        [Fe(t,:) , M(t,:),  K(t+dl)] = discreteLonlyG2(Fe(t-1,:) ,M(t-1,:),K([(t-1), (t+dl-1)]) ,km, kf, d(t-1), p2(1),p2(2), sl, gm, g, nn);
-
-        end
-  else
-      
-        [Fe(t,:) , M(t,:),  K(t+dl)] = discreteLonlyG2s(Fe(t-1,:) ,M(t-1,:),K([(t-1), (t+dl-1)]) ,km, kf, d(t-1), p2(1),p2(2), sl, gm, g, nn);
-  
-
-   
-        for t = 3:tt
-
-         nn = sum(M((t-2),2:13) + Fe((t-2),2:13));
-         [Fe(t,:) , M(t,:),  K(t+dl)] = discreteLonlyG2s(Fe(t-1,:) ,M(t-1,:),K([(t-1), (t+dl-1)]) ,km, kf, d(t-1), p2(1),p2(2), sl, gm, g, nn);
-    
-        end
-  end
-
-
-
-
-
-
-modY = zeros(1,7);
-modY(1) = sum(Fe(:,2) + M(:,2));
-modY(2) = sum(sum(Fe(:,3:4) + M(:,3:4),2));
-modY(3) = sum(sum(Fe(:,5:7) + M(:,5:7),2));
-modY(4) = sum(sum(Fe(:,8:13) + M(:,8:13),2));
-modY(5) = sum(sum(Fe(:,14:19) + M(:,14:19),2));
-modY(6) = sum(sum(M(:,20:22),2));
-modY(7) = sum(sum(Fe(:,20:22),2));
-
-% Norma 2/4
+% Daily males and females - Var C columns N and O
 Mp = [ 0     0     0     0     0     0     0     3    26     1     1     1, zeros(1, 33)];
 Fp = [0     0     0     0     0     0     0     0    10     6     2 , zeros(1,34)];
 
-
-if( mm == 1)
-y =   y+ norm((modY-Data)./Data);
-elseif(mm == 2)
-y =  y+  norm([Mp,Fp] - [sum(M(:,20:22),2)', sum(Fe(:,20:22),2)']);
-else
+% Calculating error
 y2 = (modY(1:5)-Data(1:5))./Data(1:5);
-    y2 =  sum(y2.^2) + sum((([Mp,Fp] - [sum(M(:,20:22),2)', sum(Fe(:,20:22),2)'])./4).^2);
-   y =  y+  y2;
-end
+y2 = sum(y2.^2) + sum((([Mp,Fp] - [sum(M(:,20:22),2)', sum(Fe(:,20:22),2)'])./4).^2);
+y = y + y2;
+
+%% Third data set
+
+% summed larvae values (Var C, row 181)
+Data  = [167    68    64   237   123];
+% Input daily death - calculated from columns P and R in Var C
+%d = [  0.0256    0.0263, 0    0.0676    0.0290, 0  0 0 0 0 0    0.3333 , 0, 0, 0, 0,  0, 0  0, 0,0,  0.2500    0.3333   0, 0, 0,  0   0.5, 0, zeros(1,30) 0  ];
+nd = [2 	2	0	5	2	0	0	0	0	0	0	3	0	0	0	0	0	0	0	0	0	1	1	0	0	0	0	1	0	0	0	0	0   0   0];
+n = [78 	76	74	74	69	67	67	67	67	67	67	67	64	64	64	64	64	64	64	64	64	64	63	62	62	62	62	62	61	61	61	61	61	61	61];
+adult = [0	0	0	0	0	0	0	28	48	54	57	58	58	59	60	60	60	60	60	60	60	60	60	60	60	60	60	60	60	60	60	60	60	60	60];
+d = zeros(1,tt);
+d(1:length(nd)) = nd./(n-adult);
+
+VarC3
 
 
-% Third
+% Daily males and females - Var C columns N and O
+Mp = [0     0     0     0     0     0     0    24     8     1     0     0     0     1     1  zeros(1,30)];
+Fp = [0     0     0     0     0     0     0     4    12     5     3     1 zeros(1,33)];
 
-Data  = [   167    68    64   237   123    35    25];
-% In put daily death
- d = [  0.0256    0.0263, 0    0.0676    0.0290, 0  0 0 0 0 0    0.3333 , 0, 0, 0, 0,  0, 0  0, 0,0,  0.2500    0.3333   0, 0, 0,  0   0.5, 0, 0 0, 0 0, 0 ,0 zeros(1,27) ];
-
-
-
-% initial values 
-
-
-Fe = zeros(tt, 22);
-M = zeros(tt, 22);
-
-
-Fe(1,2) = 39;
-M(1,2) = 39;
-
-K = zeros(tt,1);
-
-K(1:(dl+1),:) = 30; 
-% 
-
-%
-    
-    
-
-t = 2;
-  nn = sum(M(1,2:13) + Fe(1,2:13));
-  
-  if(pic == 0)
-      
-      
-   [Fe(t,:) , M(t,:),  K(t+dl)] = discreteLonlyG2(Fe(t-1,:) ,M(t-1,:),K([(t-1), (t+dl-1)]) ,km, kf, d(t-1), p2(1),p2(2), sl, gm, g, nn);
-  
-
-   
-        for t = 3:tt
-
-        nn = sum(M((t-2),2:13) + Fe((t-2),2:13));
-        [Fe(t,:) , M(t,:),  K(t+dl)] = discreteLonlyG2(Fe(t-1,:) ,M(t-1,:),K([(t-1), (t+dl-1)]) ,km, kf, d(t-1), p2(1),p2(2), sl, gm, g, nn);
-
-        end
-  else
-      
-        [Fe(t,:) , M(t,:),  K(t+dl)] = discreteLonlyG2s(Fe(t-1,:) ,M(t-1,:),K([(t-1), (t+dl-1)]) ,km, kf, d(t-1), p2(1),p2(2), sl, gm, g, nn);
-  
-
-   
-        for t = 3:tt
-
-         nn = sum(M((t-2),2:13) + Fe((t-2),2:13));
-         [Fe(t,:) , M(t,:),  K(t+dl)] = discreteLonlyG2s(Fe(t-1,:) ,M(t-1,:),K([(t-1), (t+dl-1)]) ,km, kf, d(t-1), p2(1),p2(2), sl, gm, g, nn);
-    
-        end
-  end
-
-
-
-
-modY = zeros(1,7);
-modY(1) = sum(Fe(:,2) + M(:,2));
-modY(2) = sum(sum(Fe(:,3:4) + M(:,3:4),2));
-modY(3) = sum(sum(Fe(:,5:7) + M(:,5:7),2));
-modY(4) = sum(sum(Fe(:,8:13) + M(:,8:13),2));
-modY(5) = sum(sum(Fe(:,14:19) + M(:,14:19),2));
-modY(6) = sum(sum(M(:,20:22),2));
-modY(7) = sum(sum(Fe(:,20:22),2));
-
-Mp = [0     0     0     0     0     0     0    24     8     1     0     0     0     1     1  ,zeros(1,30)];
-Fp = [0     0     0     0     0     0     0     4    12     5     3     1, zeros(1,33)];
-
-% Norma 3/5
-
-
-if( mm == 1)
-y =  y+  norm((modY-Data)./Data);
-elseif(mm == 2)
-y =   y+ norm([Mp,Fp] - [sum(M(:,20:22),2)', sum(Fe(:,20:22),2)']);
-else
+% Calculating error
 y2 = (modY(1:5)-Data(1:5))./Data(1:5);
-    y2 =  sum(y2.^2) + sum((([Mp,Fp] - [sum(M(:,20:22),2)', sum(Fe(:,20:22),2)'])./4).^2);
-   y =  y+  y2;
-end
+y2 = sum(y2.^2) + sum((([Mp,Fp] - [sum(M(:,20:22),2)', sum(Fe(:,20:22),2)'])./4).^2);
+y = y + y2;
 
 
-% fourth
+%% Fourth data set
+
+% summed larvae values (Var C, row 214)
+Data  = [ 156    63    71   273   238];
+% Input daily death - calculated from columns P and R in Var C
+% d = [  0.0128    0.0260    0.0133, 0   0.0541    0.0143, 0  0 0, 0 0,  0.0769, 0,   0.0833,  0 0, 0 0, 0  0, 0,  0.0909    0.1  0, 0.1111    0.1250, zeros(1,30) ];
+nd = [1	2	1	0	4	1	0	0	0	0	0	1	0	1	0	0	0	0	0	0	0	1	1	0	1	1	0	0	0	0];
+n = [78	77	75	74	74	70	69	69	69	69	69	69	68	68	67	67	67	67	67	67	67	67	66	65	65	64	63	63	63	63];
+adult = [0	0	0	0	0	0	0	25	51	56	56	56	56	56	56	56	56	56	56	56	56	56	56	56	56	56	56	56	56	56];
+d = zeros(1,tt);
+d(1:length(nd)) = nd./(n-adult);
+
+VarC3
 
 
-Data  = [ 156    63    71   273   238    34    22];
-% In put daily death
- d = [  0.0128    0.0260    0.0133, 0   0.0541    0.0143, 0  0 0, 0 0,  0.0769, 0,   0.0833,  0 0, 0 0, 0  0, 0,  0.0909    0.1  0, 0.1111    0.1250, 0 0 0 0 zeros(1,40)];
+% Daily males and females - Var C columns N and O
+Mp = [0     0     0     0     0     0     0    24     9     1   zeros(1,35)];
+Fp = [0     0     0     0     0     0     0     1    17     4  zeros(1,35)];
 
-
-
-% initial values 
-
-
-Fe = zeros(tt, 22);
-M = zeros(tt, 22);
-
-
-Fe(1,2) = 39;
-M(1,2) = 39;
-
-K = zeros(tt,1);
-
-K(1:(dl+1),:) = 30; 
-% 
-
-%
-    
-    
-t = 2;
-  nn = sum(M(1,2:13) + Fe(1,2:13));
-  if(pic == 0)
-      
-      
-   [Fe(t,:) , M(t,:),  K(t+dl)] = discreteLonlyG2(Fe(t-1,:) ,M(t-1,:),K([(t-1), (t+dl-1)]) ,km, kf, d(t-1), p2(1),p2(2), sl, gm, g, nn);
-  
-
-   
-        for t = 3:tt
-
-        nn = sum(M((t-2),2:13) + Fe((t-2),2:13));
-        [Fe(t,:) , M(t,:),  K(t+dl)] = discreteLonlyG2(Fe(t-1,:) ,M(t-1,:),K([(t-1), (t+dl-1)]) ,km, kf, d(t-1), p2(1),p2(2), sl, gm, g, nn);
-
-        end
-  else
-      
-        [Fe(t,:) , M(t,:),  K(t+dl)] = discreteLonlyG2s(Fe(t-1,:) ,M(t-1,:),K([(t-1), (t+dl-1)]) ,km, kf, d(t-1), p2(1),p2(2), sl, gm, g, nn);
-  
-
-   
-        for t = 3:tt
-
-         nn = sum(M((t-2),2:13) + Fe((t-2),2:13));
-         [Fe(t,:) , M(t,:),  K(t+dl)] = discreteLonlyG2s(Fe(t-1,:) ,M(t-1,:),K([(t-1), (t+dl-1)]) ,km, kf, d(t-1), p2(1),p2(2), sl, gm, g, nn);
-    
-        end
-  end
-
-
-
-
-modY = zeros(1,7);
-modY(1) = sum(Fe(:,2) + M(:,2));
-modY(2) = sum(sum(Fe(:,3:4) + M(:,3:4),2));
-modY(3) = sum(sum(Fe(:,5:7) + M(:,5:7),2));
-modY(4) = sum(sum(Fe(:,8:13) + M(:,8:13),2));
-modY(5) = sum(sum(Fe(:,14:19) + M(:,14:19),2));
-modY(6) = sum(sum(M(:,20:22),2));
-modY(7) = sum(sum(Fe(:,20:22),2));
-Mp = [   0     0     0     0     0     0     0    24     9     1  , zeros(1,35)];
-Fp = [  0     0     0     0     0     0     0     1    17     4 , zeros(1,35)];
-
-% Norma 4/5
-
-if( mm == 1)
-y =  y+  norm((modY-Data)./Data);
-elseif(mm == 2)
-y =   y+ norm([Mp,Fp] - [sum(M(:,20:22),2)', sum(Fe(:,20:22),2)']);
-else
+% Calculating error
 y2 = (modY(1:5)-Data(1:5))./Data(1:5);
-    y2 =  sum(y2.^2) + sum((([Mp,Fp] - [sum(M(:,20:22),2)', sum(Fe(:,20:22),2)'])./4).^2);
-   y =  y+  y2;
-end
+y2 = sum(y2.^2) + sum((([Mp,Fp] - [sum(M(:,20:22),2)', sum(Fe(:,20:22),2)'])./4).^2);
+y = y + y2;
 
+%% Fifth data set
 
-% Data 5
+% summed larvae values (Var C, row 233)
+Data  = [183	56	30	103	97];
+% Input daily death - calculated from columns P and R in Var C
+% d = [ 0.0256	0.0263	0.4324	0	0.0238	0	0	0	0	0	0	zeros(1,40)];
+nd = [2	2	32	0	1	0	0	0	0	0	0	0	0	0	0	0];
+n = [78	76	74	42	42	41	41	41	41	41	41	41	41	41	41	41];
+adult = [0	0	0	0	0	0	0	2	34	34	37	37	38	38	38	38];
+d = zeros(1,tt);
+d(1:length(nd)) = nd./(n-adult);
 
+VarC3
 
-Data  = [ 183    56    30   103   97];
-% In put daily death
- d = [  0.0256	0.0263	0.4324	0	0.0238	0	0	0	0	0	0	0	0	0	0, 0 0 0 0 zeros(1,39)];
+% Daily males and females - Var C columns N and O
+Mp = [0	0	0	0	0	0	0	2	20	0	1	 zeros(1,34)];
+Fp = [0	0	0	0	0	0	0	0	12	0	2	0	1	0	0	0	1 zeros(1,28)];
 
-
-
-% initial values 
-
-
-Fe = zeros(tt, 22);
-M = zeros(tt, 22);
-
-
-Fe(1,2) = 39;
-M(1,2) = 39;
-
-K = zeros(tt,1);
-
-K(1:(dl+1),:) = 30; 
-% 
-
-%
-    
-    
-t = 2;
-  nn = sum(M(1,2:13) + Fe(1,2:13));
-  if(pic == 0)
-      
-      
-   [Fe(t,:) , M(t,:),  K(t+dl)] = discreteLonlyG2(Fe(t-1,:) ,M(t-1,:),K([(t-1), (t+dl-1)]) ,km, kf, d(t-1), p2(1),p2(2), sl, gm, g, nn);
-  
-
-   
-        for t = 3:tt
-
-        nn = sum(M((t-2),2:13) + Fe((t-2),2:13));
-        [Fe(t,:) , M(t,:),  K(t+dl)] = discreteLonlyG2(Fe(t-1,:) ,M(t-1,:),K([(t-1), (t+dl-1)]) ,km, kf, d(t-1), p2(1),p2(2), sl, gm, g, nn);
-
-        end
-  else
-      
-        [Fe(t,:) , M(t,:),  K(t+dl)] = discreteLonlyG2s(Fe(t-1,:) ,M(t-1,:),K([(t-1), (t+dl-1)]) ,km, kf, d(t-1), p2(1),p2(2), sl, gm, g, nn);
-  
-
-   
-        for t = 3:tt
-
-         nn = sum(M((t-2),2:13) + Fe((t-2),2:13));
-         [Fe(t,:) , M(t,:),  K(t+dl)] = discreteLonlyG2s(Fe(t-1,:) ,M(t-1,:),K([(t-1), (t+dl-1)]) ,km, kf, d(t-1), p2(1),p2(2), sl, gm, g, nn);
-    
-        end
-  end
-
-
-
-
-modY = zeros(1,7);
-modY(1) = sum(Fe(:,2) + M(:,2));
-modY(2) = sum(sum(Fe(:,3:4) + M(:,3:4),2));
-modY(3) = sum(sum(Fe(:,5:7) + M(:,5:7),2));
-modY(4) = sum(sum(Fe(:,8:13) + M(:,8:13),2));
-modY(5) = sum(sum(Fe(:,14:19) + M(:,14:19),2));
-modY(6) = sum(sum(M(:,20:22),2));
-modY(7) = sum(sum(Fe(:,20:22),2));
-Mp = [  0	0	0	0	0	0	0	2	20	0	1	 zeros(1,34)];
-Fp = [  0	0	0	0	0	0	0	0	12	0	2	0	1	0	0	0	1, zeros(1,28)];
-
-% Norma 5/5
-
-if( mm == 1)
-y =  y+  norm((modY-Data)./Data);
-elseif(mm == 2)
-y =   y+ norm([Mp,Fp] - [sum(M(:,20:22),2)', sum(Fe(:,20:22),2)']);
-else
+% Calculating error
 y2 = (modY(1:5)-Data(1:5))./Data(1:5);
-    y2 =  sum(y2.^2) + sum((([Mp,Fp] - [sum(M(:,20:22),2)', sum(Fe(:,20:22),2)'])./4).^2);
-   y =  y+  y2;
-end
-
+y2 = sum(y2.^2) + sum((([Mp,Fp] - [sum(M(:,20:22),2)', sum(Fe(:,20:22),2)'])./4).^2);
+y = y + y2;
 
 end
