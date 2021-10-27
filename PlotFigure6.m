@@ -106,7 +106,7 @@ title('High Density')
 
 %%
 f6 = figure(6); % separate legend
-colororder(newcolors(2:10,:))
+colororder(newcolors)
 for j = 1:9
     plot(1:2,1:2,'-','LineWidth', 2,'MarkerSize', 0.5)
     hold on
@@ -134,12 +134,15 @@ set(f3,'Position',[10 10 1200 500])
 
 subplot(2,3,1)
 plot(5:22,mean(Hsmall), d1, 'LineWidth', d2, 'Color', d3)
+title('Small')
 
 subplot(2,3,2)
 plot(5:22,mean(Hmed), d1, 'LineWidth', d2, 'Color', d3)
+title('Medium')
 
 subplot(2,3,3)
 plot(5:22,mean(Hlarge), d1, 'LineWidth', d2, 'Color', d3)
+title('Large')
 
 subplot(2,3,4)
 plot(5:15,[mean(Lsmall) 0 0], d1, 'LineWidth', d2, 'Color', d3)
